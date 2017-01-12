@@ -43,19 +43,4 @@ LOCAL_SRC_FILES := $(call all-java-files-under, tck/src)
 LOCAL_JAVA_RESOURCE_DIRS := tck/resources
 include $(BUILD_STATIC_JAVA_LIBRARY)
 
-# -------------------------------
-# Builds the deployable Objenesis TCK for Android
-# To build and run:
-#    make APP-ObjenesisTck
-#    adb install -r out/target/product/generic/data/app/ObjenesisTck.apk
-#    adb shell am instrument -w org.objenesis.tck.android/.TckInstrumentation
-
-LOCAL_PATH := $(LOCAL_PATH)/tck-android
-include $(CLEAR_VARS)
-LOCAL_PACKAGE_NAME := ObjenesisUpdatedTck
-LOCAL_MODULE_TAGS := tests
-LOCAL_CERTIFICATE := platform
-
-LOCAL_STATIC_JAVA_LIBRARIES := objenesis-updated-tck-target
-LOCAL_SRC_FILES := $(call all-java-files-under, src)
-include $(BUILD_PACKAGE)
+include $(call all-makefiles-under, $(LOCAL_PATH))
