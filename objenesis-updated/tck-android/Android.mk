@@ -28,6 +28,9 @@ LOCAL_PACKAGE_NAME := ObjenesisUpdatedTck
 LOCAL_MODULE_TAGS := tests
 LOCAL_CERTIFICATE := platform
 
-LOCAL_STATIC_JAVA_LIBRARIES := objenesis-updated-tck-target
+LOCAL_STATIC_JAVA_LIBRARIES := \
+    objenesis-updated-tck-target \
+    junit \
+    legacy-android-test
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 include $(BUILD_PACKAGE)
