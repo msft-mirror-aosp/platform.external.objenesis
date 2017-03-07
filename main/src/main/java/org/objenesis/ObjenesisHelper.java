@@ -1,5 +1,5 @@
 /**
- * Copyright 2006-2013 the original author or authors.
+ * Copyright 2006-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,34 +35,37 @@ public final class ObjenesisHelper {
 
    /**
     * Will create a new object without any constructor being called
-    * 
+    *
+    * @param <T> Type instantiated
     * @param clazz Class to instantiate
     * @return New instance of clazz
     */
-   public static Object newInstance(Class clazz) {
+   public static <T> T newInstance(Class<T> clazz) {
       return OBJENESIS_STD.newInstance(clazz);
    }
 
    /**
     * Will create an object just like it's done by ObjectInputStream.readObject (the default
     * constructor of the first non serializable class will be called)
-    * 
+    *
+    * @param <T> Type instantiated
     * @param clazz Class to instantiate
     * @return New instance of clazz
     */
-   public static Serializable newSerializableInstance(Class clazz) {
-      return (Serializable) OBJENESIS_SERIALIZER.newInstance(clazz);
+   public static <T extends Serializable> T newSerializableInstance(Class<T> clazz) {
+      return (T) OBJENESIS_SERIALIZER.newInstance(clazz);
    }
 
    /**
     * Will pick the best instantiator for the provided class. If you need to create a lot of
     * instances from the same class, it is way more efficient to create them from the same
     * ObjectInstantiator than calling {@link #newInstance(Class)}.
-    * 
+    *
+    * @param <T> Type to instantiate
     * @param clazz Class to instantiate
     * @return Instantiator dedicated to the class
     */
-   public static ObjectInstantiator getInstantiatorOf(Class clazz) {
+   public static <T> ObjectInstantiator<T> getInstantiatorOf(Class<T> clazz) {
       return OBJENESIS_STD.getInstantiatorOf(clazz);
    }
 
@@ -71,10 +74,11 @@ public final class ObjenesisHelper {
     * ObjectInputStream.readObject behavior.
     * 
     * @see #newSerializableInstance(Class)
+    * @param <T> Type to instantiate
     * @param clazz Class to instantiate
     * @return Instantiator dedicated to the class
     */
-   public static ObjectInstantiator getSerializableObjectInstantiatorOf(Class clazz) {
+   public static <T extends Serializable> ObjectInstantiator<T> getSerializableObjectInstantiatorOf(Class<T> clazz) {
       return OBJENESIS_SERIALIZER.getInstantiatorOf(clazz);
    }
 }

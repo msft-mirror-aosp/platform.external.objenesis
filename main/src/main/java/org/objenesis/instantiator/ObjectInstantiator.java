@@ -1,5 +1,5 @@
 /**
- * Copyright 2006-2013 the original author or authors.
+ * Copyright 2006-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ package org.objenesis.instantiator;
  * 
  * @author Leonardo Mesquita
  */
-public interface ObjectInstantiator {
+public interface ObjectInstantiator<T> {
 
    /**
     * Returns a new instance of an object. The returned object's class is defined by the
@@ -28,6 +28,6 @@ public interface ObjectInstantiator {
     * 
     * @return A new instance of an object.
     */
-   Object newInstance();
+   T newInstance();
 
 }

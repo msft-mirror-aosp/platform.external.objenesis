@@ -1,5 +1,5 @@
 /**
- * Copyright 2006-2013 the original author or authors.
+ * Copyright 2006-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,26 +17,29 @@ package org.objenesis.instantiator.basic;
 
 import org.objenesis.ObjenesisException;
 import org.objenesis.instantiator.ObjectInstantiator;
+import org.objenesis.instantiator.annotations.Instantiator;
+import org.objenesis.instantiator.annotations.Typology;
 
 /**
  * The simplest instantiator - simply calls Class.newInstance(). This can deal with default public
  * constructors, but that's about it.
- * 
+ *
  * @author Joe Walnes
  * @see ObjectInstantiator
  */
-public class NewInstanceInstantiator implements ObjectInstantiator {
+@Instantiator(Typology.NOT_COMPLIANT)
+public class NewInstanceInstantiator<T> implements ObjectInstantiator<T> {
 
-   private final Class type;
+   private final Class<T> type;
 
-   public NewInstanceInstantiator(Class type) {
+   public NewInstanceInstantiator(Class<T> type) {
       this.type = type;
    }
 
-   public Object newInstance() {
+   public T newInstance() {
       try {
          return type.newInstance();
-      }      
+      }
       catch(Exception e) {
          throw new ObjenesisException(e);
       }

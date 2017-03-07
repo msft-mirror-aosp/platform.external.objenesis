@@ -1,5 +1,5 @@
 /**
- * Copyright 2006-2013 the original author or authors.
+ * Copyright 2006-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,33 +15,36 @@
  */
 package org.objenesis.instantiator.android;
 
-import org.objenesis.ObjenesisException;
-import org.objenesis.instantiator.ObjectInstantiator;
-
 import java.io.ObjectStreamClass;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
+import org.objenesis.ObjenesisException;
+import org.objenesis.instantiator.ObjectInstantiator;
+import org.objenesis.instantiator.annotations.Instantiator;
+import org.objenesis.instantiator.annotations.Typology;
+
 /**
- * Instantiator for Android which creates objects without driving their constructors, using internal
- * methods on the Dalvik implementation of {@link ObjectStreamClass}.
- * 
+ * Instantiator for Android API level 11 to 17 which creates objects without driving their
+ * constructors, using internal methods on the Dalvik implementation of {@link ObjectStreamClass}.
+ *
  * @author Ian Parkinson (Google Inc.)
  */
-public class AndroidInstantiator implements ObjectInstantiator {
-   private final Class type;
+@Instantiator(Typology.STANDARD)
+public class Android17Instantiator<T> implements ObjectInstantiator<T> {
+   private final Class<T> type;
    private final Method newInstanceMethod;
    private final Integer objectConstructorId;
 
-   public AndroidInstantiator(Class type) {
+   public Android17Instantiator(Class<T> type) {
       this.type = type;
       newInstanceMethod = getNewInstanceMethod();
       objectConstructorId = findConstructorIdForJavaLangObjectConstructor();
    }
 
-   public Object newInstance() {
+   public T newInstance() {
       try {
-         return newInstanceMethod.invoke(null, new Object[] {type, objectConstructorId});
+         return type.cast(newInstanceMethod.invoke(null, type, objectConstructorId));
       }
       catch(Exception e) {
          throw new ObjenesisException(e);
@@ -51,7 +54,7 @@ public class AndroidInstantiator implements ObjectInstantiator {
    private static Method getNewInstanceMethod() {
       try {
          Method newInstanceMethod = ObjectStreamClass.class.getDeclaredMethod(
-            "newInstance", new Class[] {Class.class, Integer.TYPE});
+            "newInstance", Class.class, Integer.TYPE);
          newInstanceMethod.setAccessible(true);
          return newInstanceMethod;
       }
@@ -66,10 +69,10 @@ public class AndroidInstantiator implements ObjectInstantiator {
    private static Integer findConstructorIdForJavaLangObjectConstructor() {
       try {
          Method newInstanceMethod = ObjectStreamClass.class.getDeclaredMethod(
-            "getConstructorId", new Class[] {Class.class});
+            "getConstructorId", Class.class);
          newInstanceMethod.setAccessible(true);
 
-         return (Integer) newInstanceMethod.invoke(null, new Object[] {Object.class});
+         return (Integer) newInstanceMethod.invoke(null, Object.class);
       }
       catch(RuntimeException e) {
          throw new ObjenesisException(e);

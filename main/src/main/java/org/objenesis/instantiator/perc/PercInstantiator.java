@@ -1,5 +1,5 @@
 /**
- * Copyright 2006-2013 the original author or authors.
+ * Copyright 2006-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,28 +20,31 @@ import java.lang.reflect.Method;
 
 import org.objenesis.ObjenesisException;
 import org.objenesis.instantiator.ObjectInstantiator;
+import org.objenesis.instantiator.annotations.Instantiator;
+import org.objenesis.instantiator.annotations.Typology;
 
 /**
  * Instantiates a class by making a call to internal Perc private methods. It is only supposed to
  * work on Perc JVMs. This instantiator will not call any constructors. The code was provided by
  * Aonix Perc support team.
- * 
+ *
  * @author Henri Tremblay
  * @see org.objenesis.instantiator.ObjectInstantiator
  */
-public class PercInstantiator implements ObjectInstantiator {
+@Instantiator(Typology.STANDARD)
+public class PercInstantiator<T> implements ObjectInstantiator<T> {
 
 	private final Method newInstanceMethod;
 
 	private final Object[] typeArgs = new Object[] { null, Boolean.FALSE };
 
-	public PercInstantiator(Class type) {
+	public PercInstantiator(Class<T> type) {
 
 		typeArgs[0] = type;
 
 		try {
-			newInstanceMethod = ObjectInputStream.class.getDeclaredMethod("newInstance",
-					new Class[] { Class.class, Boolean.TYPE });
+         newInstanceMethod = ObjectInputStream.class.getDeclaredMethod("newInstance", Class.class,
+            Boolean.TYPE);
 			newInstanceMethod.setAccessible(true);
 		}
       catch(RuntimeException e) {
@@ -52,9 +55,10 @@ public class PercInstantiator implements ObjectInstantiator {
       }
 	}
 
-	public Object newInstance() {
+	@SuppressWarnings("unchecked")
+   public T newInstance() {
 		try {
-			return newInstanceMethod.invoke(null, typeArgs);
+         return (T) newInstanceMethod.invoke(null, typeArgs);
 		} catch (Exception e) {
 			throw new ObjenesisException(e);
 		}

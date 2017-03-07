@@ -1,5 +1,5 @@
 /**
- * Copyright 2006-2013 the original author or authors.
+ * Copyright 2006-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,8 @@ import java.io.Serializable;
 
 import org.objenesis.ObjenesisException;
 import org.objenesis.instantiator.ObjectInstantiator;
+import org.objenesis.instantiator.annotations.Instantiator;
+import org.objenesis.instantiator.annotations.Typology;
 
 /**
  * Instantiates a class by using a dummy input stream that always feeds data for an empty object of
@@ -34,11 +36,12 @@ import org.objenesis.instantiator.ObjectInstantiator;
  * defines a "readResolve" method, since it may return objects that have been returned previously
  * (i.e., there's no guarantee that the returned object is a new one), or even objects from a
  * completely different class.
- * 
+ *
  * @author Leonardo Mesquita
  * @see org.objenesis.instantiator.ObjectInstantiator
  */
-public class ObjectInputStreamInstantiator implements ObjectInstantiator {
+@Instantiator(Typology.SERIALIZATION)
+public class ObjectInputStreamInstantiator<T> implements ObjectInstantiator<T> {
    private static class MockStream extends InputStream {
 
       private int pointer;
@@ -77,7 +80,7 @@ public class ObjectInputStreamInstantiator implements ObjectInstantiator {
 
       }
 
-      public MockStream(Class clazz) {
+      public MockStream(Class<?> clazz) {
          this.pointer = 0;
          this.sequence = 0;
          this.data = HEADER;
@@ -116,6 +119,7 @@ public class ObjectInputStreamInstantiator implements ObjectInstantiator {
          data = buffers[sequence];
       }
 
+      @Override
       public int read() throws IOException {
          int result = data[pointer++];
          if(pointer >= data.length) {
@@ -125,10 +129,12 @@ public class ObjectInputStreamInstantiator implements ObjectInstantiator {
          return result;
       }
 
+      @Override
       public int available() throws IOException {
          return Integer.MAX_VALUE;
       }
 
+      @Override
       public int read(byte[] b, int off, int len) throws IOException {
          int left = len;
          int remaining = data.length - pointer;
@@ -151,7 +157,7 @@ public class ObjectInputStreamInstantiator implements ObjectInstantiator {
 
    private ObjectInputStream inputStream;
 
-   public ObjectInputStreamInstantiator(Class clazz) {
+   public ObjectInputStreamInstantiator(Class<T> clazz) {
       if(Serializable.class.isAssignableFrom(clazz)) {
          try {
             this.inputStream = new ObjectInputStream(new MockStream(clazz));
@@ -161,14 +167,15 @@ public class ObjectInputStreamInstantiator implements ObjectInstantiator {
          }
       }
       else {
-    	  throw new ObjenesisException(new NotSerializableException(clazz+" not serializable"));
+         throw new ObjenesisException(new NotSerializableException(clazz + " not serializable"));
       }
    }
 
-   public Object newInstance() {
+   @SuppressWarnings("unchecked")
+   public T newInstance() {
       try {
-         return inputStream.readObject();
-      }      
+         return (T) inputStream.readObject();
+      }
       catch(ClassNotFoundException e) {
          throw new Error("ClassNotFoundException: " + e.getMessage());
       }

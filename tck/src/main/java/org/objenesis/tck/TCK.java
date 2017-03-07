@@ -1,5 +1,5 @@
 /**
- * Copyright 2006-2013 the original author or authors.
+ * Copyright 2006-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,21 +15,21 @@
  */
 package org.objenesis.tck;
 
+import org.objenesis.Objenesis;
+import org.objenesis.strategy.PlatformDescription;
+
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import org.objenesis.Objenesis;
-
 /**
  * <b>Technology Compatibility Kit</b> (TCK) for {@link Objenesis}s.
- * <p/>
+ * <p>
  * This TCK accepts a set of candidate classes (class it attempts to instantiate) and a set of
  * Objenesis implementations. It then tries instantiating every candidate with every Objenesis
  * implementations, reporting the results to a {@link Reporter}.
+ * 
  * <h3>Example usage</h3>
  * 
  * <pre>
@@ -53,9 +53,9 @@ import org.objenesis.Objenesis;
  */
 public class TCK {
 
-   private final List objenesisInstances = new ArrayList();
-   private final List candidates = new ArrayList();
-   private final Map descriptions = new HashMap();
+   private final List<Objenesis> objenesisInstances = new ArrayList<Objenesis>();
+   private final List<Class<?>> candidates = new ArrayList<Class<?>>();
+   private final Map<Object, String> descriptions = new HashMap<Object, String>();
 
    /**
     * Register a candidate class to attempt to instantiate.
@@ -63,7 +63,7 @@ public class TCK {
     * @param candidateClass Class to attempt to instantiate
     * @param description Description of the class
     */
-   public void registerCandidate(Class candidateClass, String description) {
+   public void registerCandidate(Class<?> candidateClass, String description) {
       candidates.add(candidateClass);
       descriptions.put(candidateClass, description);
    }
@@ -86,20 +86,17 @@ public class TCK {
     */
    public void runTests(Reporter reporter) {
       reporter.startTests(describePlatform(), findAllDescriptions(candidates, descriptions),
-         findAllDescriptions(objenesisInstances, descriptions));
+              findAllDescriptions(objenesisInstances, descriptions));
 
-      for(Iterator i = candidates.iterator(); i.hasNext();) {
-         Class candidateClass = (Class) i.next();
-         String candidateDescription = (String) descriptions.get(candidateClass);
+      for(Class<?> candidateClass : candidates) {
+         String candidateDescription = descriptions.get(candidateClass);
 
-         for(Iterator j = objenesisInstances.iterator(); j.hasNext();) {
-            Objenesis objenesis = (Objenesis) j.next();
-
-            String objenesisDescription = (String) descriptions.get(objenesis);
+         for(Objenesis objenesis : objenesisInstances) {
+            String objenesisDescription = descriptions.get(objenesis);
 
             reporter.startTest(candidateDescription, objenesisDescription);
 
-            runTest(reporter, candidateClass, objenesis, candidateDescription);
+            runTest(reporter, candidateClass, objenesis);
 
             reporter.endTest();
          }
@@ -107,8 +104,7 @@ public class TCK {
       reporter.endTests();
    }
 
-   private void runTest(Reporter reporter, Class candidate, Objenesis objenesis,
-      String candidateDescription) {
+   private void runTest(Reporter reporter, Class<?> candidate, Objenesis objenesis) {
       try {
          Object instance = objenesis.newInstance(candidate);
          boolean success = instance != null && instance.getClass() == candidate;
@@ -119,10 +115,19 @@ public class TCK {
       }
    }
 
-   private Collection findAllDescriptions(List keys, Map descriptions) {
-      List results = new ArrayList(keys.size());
-      for(int i = 0; i < keys.size(); i++) {
-         results.add(descriptions.get(keys.get(i)));
+   /**
+    * Return the human readable description for list of TCK items (Objenesis instances or test
+    * candidates)
+    * 
+    * @param keys list of items for which we are searching for a description
+    * @param descriptions all descriptions
+    * @return map of items with their description. Will contain one entry per entry in the original
+    *         key list
+    */
+   private Map<String, Object> findAllDescriptions(List<?> keys, Map<?, String> descriptions) {
+      Map<String, Object> results = new HashMap<String, Object>(keys.size());
+      for(Object o : keys) {
+         results.put(descriptions.get(o), o);
       }
       return results;
    }
@@ -130,14 +135,11 @@ public class TCK {
    /**
     * Describes the platform. Outputs Java version and vendor. To change this behavior, override
     * this method.
-    * 
+    *
     * @return Description of the current platform
     */
    protected String describePlatform() {
-      return "Java " + System.getProperty("java.specification.version") + " ("
-         + System.getProperty("java.vm.vendor") + " " + System.getProperty("java.vm.name") + " "
-         + System.getProperty("java.vm.version") + " " + System.getProperty("java.runtime.version")
-         + ")";
+      return PlatformDescription.describePlatform();
    }
 
 }

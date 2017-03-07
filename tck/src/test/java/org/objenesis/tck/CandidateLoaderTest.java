@@ -1,5 +1,5 @@
 /**
- * Copyright 2006-2013 the original author or authors.
+ * Copyright 2006-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,25 +15,29 @@
  */
 package org.objenesis.tck;
 
+import static org.junit.Assert.*;
+
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 
-import junit.framework.TestCase;
+import org.junit.Before;
+import org.junit.Test;
 
 /**
  * @author Joe Walnes
  */
-public class CandidateLoaderTest extends TestCase {
+public class CandidateLoaderTest {
 
-   private StringBuffer recordedEvents;
+   private StringBuilder recordedEvents;
    private CandidateLoader candidateLoader;
 
-   protected void setUp() throws Exception {
-      super.setUp();
+   @Before
+   public void setUp() throws Exception {
 
-      recordedEvents = new StringBuffer();
+      recordedEvents = new StringBuilder();
       TCK tck = new TCK() {
-         public void registerCandidate(Class candidateClass, String description) {
+         @Override
+         public void registerCandidate(Class<?> candidateClass, String description) {
             recordedEvents.append("registerCandidate('").append(candidateClass).append("', '")
                .append(description).append("')\n");
          }
@@ -47,6 +51,7 @@ public class CandidateLoaderTest extends TestCase {
       candidateLoader = new CandidateLoader(tck, getClass().getClassLoader(), errorHandler);
    }
 
+   @Test
    public void testReadsClassesAndDescriptionsFromPropertiesFile() throws IOException {
       String input = "" + "org.objenesis.tck.CandidateLoaderTest$A = A candidate\n" + "\n"
          + "# a comment and some whitespace\n" + "\n"
@@ -62,6 +67,7 @@ public class CandidateLoaderTest extends TestCase {
          recordedEvents.toString());
    }
 
+   @Test
    public void testReportsMissingClassesToErrorHandler() throws IOException {
       String input = "" + "org.objenesis.tck.CandidateLoaderTest$A = A candidate\n"
          + "org.objenesis.tck.CandidateLoaderTest$NonExistant = Dodgy candidate\n"
@@ -76,6 +82,7 @@ public class CandidateLoaderTest extends TestCase {
          recordedEvents.toString());
    }
 
+   @Test
    public void testLoadsFromResourceInClassPath() throws IOException {
       // See CandidateLoaderTest-sample.properties.
 
@@ -87,6 +94,7 @@ public class CandidateLoaderTest extends TestCase {
          recordedEvents.toString());
    }
 
+   @Test
    public void testThrowsIOExceptionIfResourceNotInClassPath() throws IOException {
       try {
          candidateLoader.loadFromResource(getClass(), "Blatently-Bogus.properties");

@@ -1,5 +1,5 @@
 /**
- * Copyright 2006-2013 the original author or authors.
+ * Copyright 2006-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,9 +26,10 @@ public interface InstantiatorStrategy {
 
    /**
     * Create a dedicated instantiator for the given class
-    * 
-    * @param type Class that will be instantiate
+    *
+    * @param <T> Type to instantiate
+    * @param type Class that will be instantiated
     * @return Dedicated instantiator
     */
-   ObjectInstantiator newInstantiatorOf(Class type);
+   <T> ObjectInstantiator<T> newInstantiatorOf(Class<T> type);
 }

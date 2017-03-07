@@ -1,5 +1,5 @@
 /**
- * Copyright 2006-2013 the original author or authors.
+ * Copyright 2006-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,34 +15,49 @@
  */
 package org.objenesis.instantiator.android;
 
-import org.objenesis.ObjenesisException;
-import org.objenesis.instantiator.ObjectInstantiator;
-
 import java.io.ObjectStreamClass;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+
+import org.objenesis.ObjenesisException;
+import org.objenesis.instantiator.ObjectInstantiator;
+import org.objenesis.instantiator.annotations.Instantiator;
+import org.objenesis.instantiator.annotations.Typology;
 
 /**
  * {@link ObjectInstantiator} for Android which creates objects using the constructor from the first
  * non-serializable parent class constructor, using internal methods on the Dalvik implementation of
  * {@link ObjectStreamClass}.
- * 
+ *
  * @author Ian Parkinson (Google Inc.)
  */
-public class AndroidSerializationInstantiator implements ObjectInstantiator {
-   private final Class type;
+@Instantiator(Typology.SERIALIZATION)
+public class AndroidSerializationInstantiator<T> implements ObjectInstantiator<T> {
+   private final Class<T> type;
    private final ObjectStreamClass objectStreamClass;
    private final Method newInstanceMethod;
 
-   public AndroidSerializationInstantiator(Class type) {
+   public AndroidSerializationInstantiator(Class<T> type) {
       this.type = type;
       newInstanceMethod = getNewInstanceMethod();
-      objectStreamClass = ObjectStreamClass.lookupAny(type);
+      Method m = null;
+      try {
+         m = ObjectStreamClass.class.getMethod("lookupAny", Class.class);
+      } catch (NoSuchMethodException e) {
+         throw new ObjenesisException(e);
+      }
+      try {
+         objectStreamClass = (ObjectStreamClass) m.invoke(null, type);
+      } catch (IllegalAccessException e) {
+         throw new ObjenesisException(e);
+      } catch (InvocationTargetException e) {
+         throw new ObjenesisException(e);
+      }
    }
 
-   public Object newInstance() {
+   public T newInstance() {
       try {
-         return newInstanceMethod.invoke(objectStreamClass, new Object[] {type});
+         return type.cast(newInstanceMethod.invoke(objectStreamClass, type));
       }
       catch(IllegalAccessException e) {
          throw new ObjenesisException(e);
@@ -58,7 +73,7 @@ public class AndroidSerializationInstantiator implements ObjectInstantiator {
    private static Method getNewInstanceMethod() {
       try {
          Method newInstanceMethod = ObjectStreamClass.class.getDeclaredMethod(
-            "newInstance", new Class[] {Class.class});
+            "newInstance", Class.class);
          newInstanceMethod.setAccessible(true);
          return newInstanceMethod;
       }
