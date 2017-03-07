@@ -1,5 +1,5 @@
 /**
- * Copyright 2006-2013 the original author or authors.
+ * Copyright 2006-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,13 @@
  */
 package org.objenesis.tck;
 
+import static org.junit.Assert.*;
+
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
-import java.io.Serializable;
-import java.util.Collection;
+import java.util.Map;
 
-import junit.framework.TestCase;
-
+import org.junit.Test;
 import org.objenesis.ObjenesisSerializer;
 import org.objenesis.ObjenesisStd;
 
@@ -31,13 +31,7 @@ import org.objenesis.ObjenesisStd;
  * 
  * @author Henri Tremblay
  */
-public class ObjenesisTest extends TestCase {
-
-   public static class ErrorHandler implements CandidateLoader.ErrorHandler {
-      public void classNotFound(String name) {
-         fail("Class not found : " + name);
-      }
-   }
+public class ObjenesisTest {
 
    public static class JUnitReporter implements Reporter {
 
@@ -45,8 +39,8 @@ public class ObjenesisTest extends TestCase {
 
       private String currentCandidate;
 
-      public void startTests(String platformDescription, Collection allCandidates,
-         Collection allInstantiators) {
+      public void startTests(String platformDescription, Map<String, Object> allCandidates,
+         Map<String, Object> allInstantiators) {
       }
 
       public void startTest(String candidateDescription, String objenesisDescription) {
@@ -77,64 +71,20 @@ public class ObjenesisTest extends TestCase {
       public void endTest() {
       }
    }
-   
-   static class MockSuperClass {
-	   private final boolean superConstructorCalled;
-	   public MockSuperClass() {
-		   superConstructorCalled = true;
-	   }
-	   public boolean isSuperConstructorCalled() {
-		   return superConstructorCalled;
-	   }
-   }
-   
-   static class MockClass extends MockSuperClass implements Serializable {
-      private static final long serialVersionUID = 1L;
-      private final boolean constructorCalled;
-	   public MockClass() {
-		   super();
-		   constructorCalled = true;
-	   }
-	   public boolean isConstructorCalled() {
-		   return constructorCalled;
-	   }
-   }
 
-   private TCK tck = null;
-
-   private CandidateLoader candidateLoader = null;
-
-   protected void setUp() throws Exception {
-      super.setUp();
-
-      tck = new TCK();
-
-      candidateLoader = new CandidateLoader(tck, getClass().getClassLoader(), new ErrorHandler());
-   }
-
-   protected void tearDown() throws Exception {
-      candidateLoader = null;
-      tck = null;
-      super.tearDown();
-   }
-
+   @Test
    public void testObjenesisStd() throws Exception {
-      candidateLoader.loadFromResource(getClass(), "candidates/candidates.properties");
-      tck.registerObjenesisInstance(new ObjenesisStd(), "Objenesis standard");
-      tck.runTests(new JUnitReporter());
+      Main.runStandardTest(new ObjenesisStd(), new JUnitReporter());
    }
 
+   @Test
    public void testObjenesisSerializer() throws Exception {
-      candidateLoader.loadFromResource(getClass(), "candidates/serializable-candidates.properties");
-      tck.registerObjenesisInstance(new ObjenesisSerializer(), "Objenesis serializer");
-      tck.runTests(new JUnitReporter());
+      Main.runSerializerTest(new ObjenesisSerializer(), new JUnitReporter());
    }
 
+   @Test
    public void testObjenesisSerializerParentConstructorCalled() throws Exception {
-   	  Object result = new ObjenesisSerializer().newInstance(MockClass.class);
-   	  assertEquals(MockClass.class, result.getClass());
-   	  MockClass mockObject = (MockClass) result;
-   	  assertTrue(mockObject.isSuperConstructorCalled());
-   	  assertFalse(mockObject.isConstructorCalled());   	  
+      boolean result = Main.runParentConstructorTest(new ObjenesisSerializer());
+      assertTrue(result);
    }
 }

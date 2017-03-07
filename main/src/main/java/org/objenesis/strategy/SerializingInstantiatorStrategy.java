@@ -1,5 +1,5 @@
 /**
- * Copyright 2006-2013 the original author or authors.
+ * Copyright 2006-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,16 +15,19 @@
  */
 package org.objenesis.strategy;
 
-import java.io.NotSerializableException;
-import java.io.Serializable;
-
 import org.objenesis.ObjenesisException;
 import org.objenesis.instantiator.ObjectInstantiator;
 import org.objenesis.instantiator.android.AndroidSerializationInstantiator;
+import org.objenesis.instantiator.basic.ObjectInputStreamInstantiator;
 import org.objenesis.instantiator.basic.ObjectStreamClassInstantiator;
 import org.objenesis.instantiator.gcj.GCJSerializationInstantiator;
 import org.objenesis.instantiator.perc.PercSerializationInstantiator;
-import org.objenesis.instantiator.sun.Sun13SerializationInstantiator;
+import org.objenesis.instantiator.sun.SunReflectionFactorySerializationInstantiator;
+
+import java.io.NotSerializableException;
+import java.io.Serializable;
+
+import static org.objenesis.strategy.PlatformDescription.*;
 
 /**
  * Guess the best serializing instantiator for a given class. The returned instantiator will
@@ -37,7 +40,7 @@ import org.objenesis.instantiator.sun.Sun13SerializationInstantiator;
  * <li>JVM vendor version</li>
  * </ul>
  * However, instantiators are stateful and so dedicated to their class.
- * 
+ *
  * @author Henri Tremblay
  * @see ObjectInstantiator
  */
@@ -46,30 +49,38 @@ public class SerializingInstantiatorStrategy extends BaseInstantiatorStrategy {
    /**
     * Return an {@link ObjectInstantiator} allowing to create instance following the java
     * serialization framework specifications.
-    * 
+    *
     * @param type Class to instantiate
     * @return The ObjectInstantiator for the class
     */
-   public ObjectInstantiator newInstantiatorOf(Class type) {
+   public <T> ObjectInstantiator<T> newInstantiatorOf(Class<T> type) {
       if(!Serializable.class.isAssignableFrom(type)) {
          throw new ObjenesisException(new NotSerializableException(type+" not serializable"));
       }
-      if(JVM_NAME.startsWith(SUN)) {
-         if(VM_VERSION.startsWith("1.3")) {
-            return new Sun13SerializationInstantiator(type);
+      if(JVM_NAME.startsWith(HOTSPOT) || PlatformDescription.isThisJVM(OPENJDK)) {
+         if(isGoogleAppEngine()) {
+            return new ObjectInputStreamInstantiator<T>(type);
          }
+         // ObjectStreamClassInstantiator uses setAccessible which isn't supported on JDK9
+         if(PlatformDescription.SPECIFICATION_VERSION.equals("9")) {
+            return new SunReflectionFactorySerializationInstantiator<T>(type);
+         }
+         return new ObjectStreamClassInstantiator<T>(type);
       }
       else if(JVM_NAME.startsWith(DALVIK)) {
-         return new AndroidSerializationInstantiator(type);
+         if(PlatformDescription.isAndroidOpenJDK()) {
+            return new ObjectStreamClassInstantiator<T>(type);
+         }
+         return new AndroidSerializationInstantiator<T>(type);
       }
       else if(JVM_NAME.startsWith(GNU)) {
-         return new GCJSerializationInstantiator(type);
+         return new GCJSerializationInstantiator<T>(type);
       }
       else if(JVM_NAME.startsWith(PERC)) {
-    	  return new PercSerializationInstantiator(type);
+         return new PercSerializationInstantiator<T>(type);
       }
-      
-      return new ObjectStreamClassInstantiator(type);
+
+      return new ObjectStreamClassInstantiator<T>(type);
    }
 
 }

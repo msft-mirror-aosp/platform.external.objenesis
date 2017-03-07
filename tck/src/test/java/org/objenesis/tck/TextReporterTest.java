@@ -1,5 +1,5 @@
 /**
- * Copyright 2006-2013 the original author or authors.
+ * Copyright 2006-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,32 +15,58 @@
  */
 package org.objenesis.tck;
 
+import org.junit.Before;
+import org.junit.Test;
+import org.objenesis.Objenesis;
+import org.objenesis.ObjenesisBase;
+import org.objenesis.instantiator.basic.ConstructorInstantiator;
+import org.objenesis.instantiator.basic.FailingInstantiator;
+import org.objenesis.instantiator.basic.NullInstantiator;
+import org.objenesis.strategy.SingleInstantiatorStrategy;
+
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
-import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
-import junit.framework.TestCase;
+import static org.junit.Assert.*;
 
 /**
  * @author Joe Walnes
  * @author Henri Tremblay
  */
-public class TextReporterTest extends TestCase {
+public class TextReporterTest {
 
    private TextReporter textReporter;
    private ByteArrayOutputStream summaryBuffer;
 
-   protected void setUp() throws Exception {
-      super.setUp();
+   @Before
+   public void setUp() throws Exception {
       summaryBuffer = new ByteArrayOutputStream();
       ByteArrayOutputStream logBuffer = new ByteArrayOutputStream();
       textReporter = new TextReporter(new PrintStream(summaryBuffer), new PrintStream(logBuffer));
    }
 
+   @Test
    public void testReportsSuccessesInTabularFormat() {
-      textReporter.startTests("Some platform", Arrays.asList(new String[] {"candidate A",
-         "candidate B", "candidate C"}), Arrays.asList(new String[] {"instantiator1",
-         "instantiator2", "instantiator3"}));
+      Map<String, Object> candidates = new HashMap<String, Object>();
+      candidates.put("candidate A", "A");
+      candidates.put("candidate B", "B");
+      candidates.put("candidate C", "C");
+      Map<String, Object> instantiators = new HashMap<String, Object>();
+
+      Objenesis instantiator1 = new ObjenesisBase(new SingleInstantiatorStrategy(
+         ConstructorInstantiator.class));
+      Objenesis instantiator2 = new ObjenesisBase(new SingleInstantiatorStrategy(
+         FailingInstantiator.class));
+      Objenesis instantiator3 = new ObjenesisBase(new SingleInstantiatorStrategy(
+         NullInstantiator.class));
+
+      instantiators.put("instantiator1", instantiator1);
+      instantiators.put("instantiator2", instantiator2);
+      instantiators.put("instantiator3", instantiator3);
+
+      textReporter.startTests("Some platform", candidates, instantiators);
 
       textReporter.startTest("candidate A", "instantiator1");
       textReporter.result(false);
@@ -71,7 +97,12 @@ public class TextReporterTest extends TestCase {
       PrintStream out = new PrintStream(expectedSummaryBuffer);
       out.println("Running TCK on platform: Some platform");
       out.println();
-      out.println("Not serializable parent constructor called: Y");
+      out.println("Instantiators used: ");
+      out.println("   instantiator1: ConstructorInstantiator");
+      out.println("   instantiator2: FailingInstantiator");
+      out.println("   instantiator3: NullInstantiator");
+      out.println();
+      out.println("Not serializable parent constructor called as expected: Y");
       out.println();
       out.println("            instantiator1 instantiator2 instantiator3 ");
       out.println("candidate A n             n             Y             ");

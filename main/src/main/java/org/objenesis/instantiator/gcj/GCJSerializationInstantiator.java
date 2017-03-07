@@ -1,5 +1,5 @@
 /**
- * Copyright 2006-2013 the original author or authors.
+ * Copyright 2006-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,26 +17,30 @@ package org.objenesis.instantiator.gcj;
 
 import org.objenesis.ObjenesisException;
 import org.objenesis.instantiator.SerializationInstantiatorHelper;
+import org.objenesis.instantiator.annotations.Instantiator;
+import org.objenesis.instantiator.annotations.Typology;
 
 /**
  * Instantiates a class by making a call to internal GCJ private methods. It is only supposed to
  * work on GCJ JVMs. This instantiator will create classes in a way compatible with serialization,
  * calling the first non-serializable superclass' no-arg constructor.
- * 
+ *
  * @author Leonardo Mesquita
  * @see org.objenesis.instantiator.ObjectInstantiator
  */
-public class GCJSerializationInstantiator extends GCJInstantiatorBase {
-   private Class superType;
+@Instantiator(Typology.SERIALIZATION)
+public class GCJSerializationInstantiator<T> extends GCJInstantiatorBase<T> {
+   private Class<? super T> superType;
 
-   public GCJSerializationInstantiator(Class type) {
+   public GCJSerializationInstantiator(Class<T> type) {
       super(type);
       this.superType = SerializationInstantiatorHelper.getNonSerializableSuperClass(type);
    }
 
-   public Object newInstance() {
+   @Override
+   public T newInstance() {
       try {
-         return newObjectMethod.invoke(dummyStream, new Object[] {type, superType});
+         return type.cast(newObjectMethod.invoke(dummyStream, type, superType));
       }
       catch(Exception e) {
          throw new ObjenesisException(e);

@@ -1,5 +1,5 @@
 /**
- * Copyright 2006-2013 the original author or authors.
+ * Copyright 2006-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,8 @@ import java.lang.reflect.Constructor;
 import org.objenesis.ObjenesisException;
 import org.objenesis.instantiator.ObjectInstantiator;
 import org.objenesis.instantiator.SerializationInstantiatorHelper;
+import org.objenesis.instantiator.annotations.Instantiator;
+import org.objenesis.instantiator.annotations.Typology;
 
 /**
  * Instantiates an object using internal sun.reflect.ReflectionFactory - a class only available on
@@ -28,24 +30,26 @@ import org.objenesis.instantiator.SerializationInstantiatorHelper;
  * a way compatible with serialization, calling the first non-serializable superclass' no-arg
  * constructor. This is the best way to instantiate an object without any side effects caused by the
  * constructor - however it is not available on every platform.
- * 
+ *
  * @author Leonardo Mesquita
  * @see ObjectInstantiator
  */
-public class SunReflectionFactorySerializationInstantiator implements ObjectInstantiator {
+@Instantiator(Typology.SERIALIZATION)
+public class SunReflectionFactorySerializationInstantiator<T> implements ObjectInstantiator<T> {
 
-   private final Constructor mungedConstructor;
+   private final Constructor<T> mungedConstructor;
 
-   public SunReflectionFactorySerializationInstantiator(Class type) {
-	  Class nonSerializableAncestor = SerializationInstantiatorHelper.getNonSerializableSuperClass(type);
-      
-      Constructor nonSerializableAncestorConstructor;
+   public SunReflectionFactorySerializationInstantiator(Class<T> type) {
+      Class<? super T> nonSerializableAncestor = SerializationInstantiatorHelper
+         .getNonSerializableSuperClass(type);
+
+      Constructor<? super T> nonSerializableAncestorConstructor;
       try {
          nonSerializableAncestorConstructor = nonSerializableAncestor
             .getConstructor((Class[]) null);
       }
       catch(NoSuchMethodException e) {
-         throw new ObjenesisException(new NotSerializableException(type+" has no suitable superclass constructor"));         
+         throw new ObjenesisException(new NotSerializableException(type+" has no suitable superclass constructor"));
       }
 
       mungedConstructor = SunReflectionFactoryHelper.newConstructorForSerialization(
@@ -53,7 +57,7 @@ public class SunReflectionFactorySerializationInstantiator implements ObjectInst
       mungedConstructor.setAccessible(true);
    }
 
-   public Object newInstance() {
+   public T newInstance() {
       try {
          return mungedConstructor.newInstance((Object[]) null);
       }

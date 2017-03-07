@@ -1,5 +1,5 @@
 /**
- * Copyright 2006-2013 the original author or authors.
+ * Copyright 2006-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,8 +21,9 @@ import java.io.PrintStream;
 import java.util.Properties;
 
 /**
- * Loads a set of candidate classes from a properties file into the TCK. <p/> The properties file
- * takes the form of candidateClassName=shortDescription.
+ * Loads a set of candidate classes from a properties file into the TCK.
+ * <p>
+ * The properties file takes the form of candidateClassName=shortDescription.
  * 
  * @author Joe Walnes
  * @see TCK
@@ -36,7 +37,7 @@ public class CandidateLoader {
    /**
     * Handler for reporting errors from the CandidateLoader.
     */
-   public static interface ErrorHandler {
+   public interface ErrorHandler {
       /**
        * Called whenever, trying to retrieve a candidate class from its name, a
        * ClassNotFoundException is thrown
@@ -88,6 +89,7 @@ public class CandidateLoader {
       // entries directly to the TCK (which retains order).
       Properties properties = new Properties() {
          private static final long serialVersionUID = 1L;
+         @Override
          public Object put(Object key, Object value) {
             handlePropertyEntry((String) key, (String) value);
             return null;
@@ -103,7 +105,7 @@ public class CandidateLoader {
     * @param resource File name
     * @throws IOException If there's problem reading the file
     */
-   public void loadFromResource(Class cls, String resource) throws IOException {
+   public void loadFromResource(Class<?> cls, String resource) throws IOException {
       InputStream candidatesConfig = cls.getResourceAsStream(resource);
       if(candidatesConfig == null) {
          throw new IOException("Resource '" + resource + "' not found relative to " + cls.getName());
@@ -118,7 +120,7 @@ public class CandidateLoader {
 
    private void handlePropertyEntry(String key, String value) {
       try {
-         Class candidate = Class.forName(key, true, classloader);
+         Class<?> candidate = Class.forName(key, true, classloader);
          tck.registerCandidate(candidate, value);
       }
       catch(ClassNotFoundException e) {

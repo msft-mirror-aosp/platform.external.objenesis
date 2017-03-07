@@ -1,5 +1,5 @@
 /**
- * Copyright 2006-2013 the original author or authors.
+ * Copyright 2006-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,11 @@
  */
 package org.objenesis.tck;
 
-import java.util.Collection;
+import static org.junit.Assert.*;
 
-import junit.framework.TestCase;
+import java.util.Map;
 
+import org.junit.Test;
 import org.objenesis.Objenesis;
 import org.objenesis.instantiator.ObjectInstantiator;
 
@@ -26,28 +27,29 @@ import org.objenesis.instantiator.ObjectInstantiator;
  * @author Joe Walnes
  * @author Henri Tremblay
  */
-public class TCKTest extends TestCase {
+public class TCKTest {
 
    public static class StubbedInstantiator1 implements Objenesis {
-      public Object newInstance(Class clazz) {
+      public <T> T newInstance(Class<T> clazz) {
          return null;
       }
 
-      public ObjectInstantiator getInstantiatorOf(Class clazz) {
+      public <T> ObjectInstantiator<T> getInstantiatorOf(Class<T> clazz) {
          return null;
       }
    }
 
    public static class StubbedInstantiator2 implements Objenesis {
-      public Object newInstance(Class clazz) {
+      public <T> T newInstance(Class<T> clazz) {
          return null;
       }
 
-      public ObjectInstantiator getInstantiatorOf(Class clazz) {
+      public <T> ObjectInstantiator<T> getInstantiatorOf(Class<T> clazz) {
          return null;
       }
    }
 
+   @Test
    public void testReportsAllCandidatesAndInstantiatorCombinationsToReporter() {
       // Given... a TCK with some candidate classes: A, B and C.
       TCK tck = new TCK();
@@ -75,6 +77,7 @@ public class TCKTest extends TestCase {
          + "result(false)\n" + "endTest()\n" + "endTests()\n", reporter.toString());
    }
 
+   @Test
    public void testReportsSuccessIfCandidateCanBeInstantiated() {
       // Given... a TCK with some candidate classes: A, B and C.
       TCK tck = new TCK();
@@ -102,11 +105,11 @@ public class TCKTest extends TestCase {
    // Some sample classes used for testing.
 
    public static class SelectiveInstantiator implements Objenesis {
-      public Object newInstance(Class clazz) {
-         return clazz == CandidateA.class ? new CandidateA() : null;
+      public <T> T newInstance(Class<T> clazz) {
+         return clazz.cast(clazz == CandidateA.class ? new CandidateA() : null);
       }
 
-      public ObjectInstantiator getInstantiatorOf(Class clazz) {
+      public <T> ObjectInstantiator<T> getInstantiatorOf(Class<T> clazz) {
          return null;
       }
    }
@@ -128,10 +131,10 @@ public class TCKTest extends TestCase {
     */
    private static class RecordingReporter implements Reporter {
 
-      private final StringBuffer log = new StringBuffer();
+      private final StringBuilder log = new StringBuilder();
 
-      public void startTests(String platformDescription, Collection allCandidates,
-         Collection allInstantiators) {
+      public void startTests(String platformDescription, Map<String, Object> allCandidates,
+         Map<String, Object> allInstantiators) {
          log.append("startTests()\n");
       }
 
@@ -156,6 +159,7 @@ public class TCKTest extends TestCase {
          log.append("endTests()\n");
       }
 
+      @Override
       public String toString() {
          return log.toString();
       }

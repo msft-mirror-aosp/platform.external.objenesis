@@ -1,5 +1,5 @@
 /**
- * Copyright 2006-2013 the original author or authors.
+ * Copyright 2006-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,22 +18,26 @@ package org.objenesis.instantiator.gcj;
 import java.lang.reflect.InvocationTargetException;
 
 import org.objenesis.ObjenesisException;
+import org.objenesis.instantiator.annotations.Instantiator;
+import org.objenesis.instantiator.annotations.Typology;
 
 /**
  * Instantiates a class by making a call to internal GCJ private methods. It is only supposed to
  * work on GCJ JVMs. This instantiator will not call any constructors.
- * 
+ *
  * @author Leonardo Mesquita
  * @see org.objenesis.instantiator.ObjectInstantiator
  */
-public class GCJInstantiator extends GCJInstantiatorBase {
-   public GCJInstantiator(Class type) {
+@Instantiator(Typology.STANDARD)
+public class GCJInstantiator<T> extends GCJInstantiatorBase<T> {
+   public GCJInstantiator(Class<T> type) {
       super(type);
    }
 
-   public Object newInstance() {
+   @Override
+   public T newInstance() {
       try {
-         return newObjectMethod.invoke(dummyStream, new Object[] {type, Object.class});
+         return type.cast(newObjectMethod.invoke(dummyStream, type, Object.class));
       }
       catch(RuntimeException e) {
          throw new ObjenesisException(e);

@@ -1,5 +1,5 @@
 /**
- * Copyright 2006-2013 the original author or authors.
+ * Copyright 2006-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,26 +20,28 @@ import java.lang.reflect.Method;
 
 import org.objenesis.ObjenesisException;
 import org.objenesis.instantiator.ObjectInstantiator;
+import org.objenesis.instantiator.annotations.Instantiator;
+import org.objenesis.instantiator.annotations.Typology;
 
 /**
  * Instantiates a class by using reflection to make a call to private method
  * ObjectStreamClass.newInstance, present in many JVM implementations. This instantiator will create
  * classes in a way compatible with serialization, calling the first non-serializable superclass'
  * no-arg constructor.
- * 
+ *
  * @author Leonardo Mesquita
  * @see ObjectInstantiator
  * @see java.io.Serializable
  */
-public class ObjectStreamClassInstantiator implements ObjectInstantiator {
+@Instantiator(Typology.SERIALIZATION)
+public class ObjectStreamClassInstantiator<T> implements ObjectInstantiator<T> {
 
    private static Method newInstanceMethod;
 
    private static void initialize() {
       if(newInstanceMethod == null) {
          try {
-            newInstanceMethod = ObjectStreamClass.class.getDeclaredMethod("newInstance",
-               new Class[] {});
+            newInstanceMethod = ObjectStreamClass.class.getDeclaredMethod("newInstance");
             newInstanceMethod.setAccessible(true);
          }
          catch(RuntimeException e) {
@@ -47,26 +49,27 @@ public class ObjectStreamClassInstantiator implements ObjectInstantiator {
          }
          catch(NoSuchMethodException e) {
             throw new ObjenesisException(e);
-         }         
+         }
       }
    }
 
    private final ObjectStreamClass objStreamClass;
 
-   public ObjectStreamClassInstantiator(Class type) {
+   public ObjectStreamClassInstantiator(Class<T> type) {
       initialize();
       objStreamClass = ObjectStreamClass.lookup(type);
    }
 
-   public Object newInstance() {
-	   
+   @SuppressWarnings("unchecked")
+   public T newInstance() {
+
       try {
-         return newInstanceMethod.invoke(objStreamClass, new Object[] {});
+         return (T) newInstanceMethod.invoke(objStreamClass);
       }
       catch(Exception e) {
          throw new ObjenesisException(e);
       }
-      
+
    }
 
 }

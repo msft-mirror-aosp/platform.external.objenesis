@@ -1,5 +1,5 @@
 /**
- * Copyright 2006-2013 the original author or authors.
+ * Copyright 2006-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.objenesis.instantiator.sun;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -29,18 +28,21 @@ import org.objenesis.instantiator.ObjectInstantiator;
  * 
  * @author Henri Tremblay
  */
+@SuppressWarnings("restriction")
 class SunReflectionFactoryHelper {
 
-   public static Constructor newConstructorForSerialization(Class type, Constructor constructor) {
-      Class reflectionFactoryClass = getReflectionFactoryClass();
+   @SuppressWarnings("unchecked")
+   public static <T> Constructor<T> newConstructorForSerialization(Class<T> type,
+      Constructor<?> constructor) {
+      Class<?> reflectionFactoryClass = getReflectionFactoryClass();
       Object reflectionFactory = createReflectionFactory(reflectionFactoryClass);
 
       Method newConstructorForSerializationMethod = getNewConstructorForSerializationMethod(
          reflectionFactoryClass);
 
       try {
-         return (Constructor) newConstructorForSerializationMethod.invoke(
-            reflectionFactory, new Object[] {type, constructor});
+         return (Constructor<T>) newConstructorForSerializationMethod.invoke(
+            reflectionFactory, type, constructor);
       }
       catch(IllegalArgumentException e) {
          throw new ObjenesisException(e);
@@ -53,7 +55,7 @@ class SunReflectionFactoryHelper {
       }
    }
 
-   private static Class getReflectionFactoryClass() {
+   private static Class<?> getReflectionFactoryClass() {
       try {
          return Class.forName("sun.reflect.ReflectionFactory");
       }
@@ -62,11 +64,11 @@ class SunReflectionFactoryHelper {
       }
    }
 
-   private static Object createReflectionFactory(Class reflectionFactoryClass) {
+   private static Object createReflectionFactory(Class<?> reflectionFactoryClass) {
       try {
          Method method = reflectionFactoryClass.getDeclaredMethod(
-            "getReflectionFactory", new Class[] {});
-         return method.invoke(null, new Object[] {});
+            "getReflectionFactory");
+         return method.invoke(null);
       }
       catch(NoSuchMethodException e) {
          throw new ObjenesisException(e);
@@ -82,10 +84,10 @@ class SunReflectionFactoryHelper {
       }
    }
 
-   private static Method getNewConstructorForSerializationMethod(Class reflectionFactoryClass) {
+   private static Method getNewConstructorForSerializationMethod(Class<?> reflectionFactoryClass) {
       try {
          return reflectionFactoryClass.getDeclaredMethod(
-            "newConstructorForSerialization", new Class[] {Class.class, Constructor.class});
+            "newConstructorForSerialization", Class.class, Constructor.class);
       }
       catch(NoSuchMethodException e) {
          throw new ObjenesisException(e);
