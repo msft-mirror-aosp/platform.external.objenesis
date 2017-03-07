@@ -3,4 +3,4 @@ Version: 2.5
 BugComponent: 21001
 
 Local Modifications:
-        None
+      Modified UnsafeFactoryInstantiator to use reflection to access Unsafe as it is not available on Android.

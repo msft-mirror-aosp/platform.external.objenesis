@@ -15,13 +15,14 @@
  */
 package org.objenesis.instantiator.sun;
 
-import sun.misc.Unsafe;
 import org.objenesis.ObjenesisException;
 import org.objenesis.instantiator.ObjectInstantiator;
 import org.objenesis.instantiator.annotations.Instantiator;
 import org.objenesis.instantiator.annotations.Typology;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 
 /**
  * Instantiates an object, WITHOUT calling it's constructor, using
@@ -35,22 +36,34 @@ import java.lang.reflect.Field;
 @Instantiator(Typology.STANDARD)
 public class UnsafeFactoryInstantiator<T> implements ObjectInstantiator<T> {
 
-   private static Unsafe unsafe;
+   private static Object unsafe;
+   private static Method allocateInstance;
    private final Class<T> type;
 
    public UnsafeFactoryInstantiator(Class<T> type) {
       if (unsafe == null) {
+         Class<?> unsafeClass;
+         try {
+             unsafeClass = Class.forName("sun.misc.Unsafe");
+         } catch (ClassNotFoundException e) {
+             throw new ObjenesisException(e);
+         }
          Field f;
          try {
-            f = Unsafe.class.getDeclaredField("theUnsafe");
+            f = unsafeClass.getDeclaredField("theUnsafe");
          } catch (NoSuchFieldException e) {
             throw new ObjenesisException(e);
          }
          f.setAccessible(true);
          try {
-            unsafe = (Unsafe) f.get(null);
+            unsafe = f.get(null);
          } catch (IllegalAccessException e) {
             throw new ObjenesisException(e);
+         }
+         try {
+             allocateInstance = unsafeClass.getMethod("allocateInstance", Class.class);
+         } catch (NoSuchMethodException e) {
+             throw new ObjenesisException(e);
          }
       }
       this.type = type;
@@ -58,8 +71,10 @@ public class UnsafeFactoryInstantiator<T> implements ObjectInstantiator<T> {
 
    public T newInstance() {
       try {
-         return type.cast(unsafe.allocateInstance(type));
-      } catch (InstantiationException e) {
+         return type.cast(allocateInstance.invoke(unsafe, type));
+      } catch (InvocationTargetException e) {
+         throw new ObjenesisException(e.getCause());
+      } catch (Exception e) {
          throw new ObjenesisException(e);
       }
    }
