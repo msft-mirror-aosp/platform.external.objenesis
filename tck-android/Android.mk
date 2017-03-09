@@ -19,8 +19,8 @@ LOCAL_PATH := $(call my-dir)
 # -------------------------------
 # Builds the deployable Objenesis TCK for Android
 # To build and run:
-#    make APP-ObjenesisTck
-#    adb install -r out/target/product/generic/data/app/ObjenesisTck.apk
+#    make ObjenesisTck
+#    adb install -r ${ANDROID_PRODUCT_OUT}/data/app/ObjenesisTck/ObjenesisTck.apk
 #    adb shell am instrument -w org.objenesis.tck.android/.TckInstrumentation
 
 include $(CLEAR_VARS)
@@ -28,6 +28,6 @@ LOCAL_PACKAGE_NAME := ObjenesisTck
 LOCAL_MODULE_TAGS := tests
 LOCAL_CERTIFICATE := platform
 
-LOCAL_STATIC_JAVA_LIBRARIES := objenesis-tck-target
-LOCAL_SRC_FILES := $(call all-java-files-under, src)
+LOCAL_STATIC_JAVA_LIBRARIES := objenesis-tck-target junit legacy-android-test
+LOCAL_SRC_FILES := $(call all-java-files-under, src/main/java)
 include $(BUILD_PACKAGE)
