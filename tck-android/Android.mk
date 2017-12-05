@@ -29,6 +29,6 @@ LOCAL_MODULE_TAGS := tests
 LOCAL_CERTIFICATE := platform
 
 LOCAL_STATIC_JAVA_LIBRARIES := objenesis-tck junit
-LOCAL_JAVA_LIBRARIES := legacy-android-test
+LOCAL_JAVA_LIBRARIES := android.test.base
 LOCAL_SRC_FILES := $(call all-java-files-under, src/main/java)
 include $(BUILD_PACKAGE)
