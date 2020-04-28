@@ -33,7 +33,8 @@ java_library_host {
 
 java_library_static {
     name: "objenesis-tck",
-    sdk_version: "core_current",
+    no_framework_libs: true,
+    sdk_version: "current",
 
     static_libs: ["objenesis"],
     srcs: ["tck/src/main/java/**/*.java"],
