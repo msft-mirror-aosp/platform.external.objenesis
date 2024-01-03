@@ -15,17 +15,18 @@
  */
 package org.objenesis.tck.android;
 
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
-import java.util.Map;
+import android.test.AndroidTestCase;
+
+import androidx.test.filters.SmallTest;
 
 import org.objenesis.ObjenesisSerializer;
 import org.objenesis.ObjenesisStd;
 import org.objenesis.tck.Main;
 import org.objenesis.tck.Reporter;
 
-import android.test.AndroidTestCase;
-import android.test.suitebuilder.annotation.SmallTest;
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
+import java.util.Map;
 
 /**
  * Test case running the entire tck on android.
