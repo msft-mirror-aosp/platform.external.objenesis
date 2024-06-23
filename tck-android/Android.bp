@@ -37,6 +37,7 @@ android_test {
     static_libs: [
         "objenesis-tck",
         "junit",
+        "androidx.test.rules",
     ],
     libs: ["android.test.base"],
     srcs: ["src/main/java/**/*.java"],
